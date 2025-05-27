@@ -29,7 +29,7 @@ function billPayment(req, res, next) {
 }
 
 app.use(session({
-    secret: '7xn7eniebjvfgwl60oeem5ou0qp8fo829hux',
+    secret: '37x8xvva6hbwto1c8jk30g83zwvrcxpjwd0n',
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false }
@@ -49,12 +49,12 @@ app.post("/billPaymentPage", billPayment, (req, res) => {
     }
 });
 
-const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiQWRkaXMgSW50ZXJuYXRpb25hbCBCYW5rIiwic3ViIjoiMTE2NjA1IiwicGVybWlzc2lvbnMiOlsiQUdFTlQiXSwiaXNzIjoiaHR0cHM6Ly9hcGkuZGVyYXNoLmdvdi5ldCIsImp0aSI6IjJlN2NiYjAwLTJiOTEtMTFlYS04MjE4LTViZjM2Yjc1MmYyMyIsImlhdCI6MTU3Nzc3MTMxM30.h_R7VrYVaMeLF_VhMPTPwFL1XCCPf3VqCC-0iihFvrU';
-const apiSecret = '7xn7eniebjvfgwl60oeem5ou0qp8fo829hux';
+const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiTEVHQUNZIElOVEVSTkFUSU9OQUwgQkFOSyIsInN1YiI6IjExOTg5OCIsInBlcm1pc3Npb25zIjpbIkFHRU5UIl0sImlzcyI6Imh0dHBzOi8vYXBpLmRlcmFzaC5nb3YuZXQiLCJqdGkiOiI0NTUyZDgxMC0zYWVlLTExZjAtODg3Ny1jZDdmOTFlODk3MWQiLCJpYXQiOjE3NDgzNDU1NDh9.vRGqix7MHeCXUqX3vWv_nNYe4MrxMI03qNYOnZelfJY';
+const apiSecret = '37x8xvva6hbwto1c8jk30g83zwvrcxpjwd0n';
 
 app.get("/getbill", async (req, res) => {
     const billIDInput = req.query["billId"];
-    const apiUrl = `https://api.qa.derash.gov.et/agent/customer-bill-data?biller_id=215521&bill_id=${billIDInput}`;
+    const apiUrl = `https://api.qa.derash.gov.et/agent/customer-bill-data?biller_id=219636&bill_id=${billIDInput}`;
 
     try {
         const response = await axios.get(apiUrl, {
@@ -62,18 +62,23 @@ app.get("/getbill", async (req, res) => {
                 "api-key": apiKey,
                 "api-secret": apiSecret,
             }
-        });
-
+        })
+        
         const billData = response.data;
         console.log(billData);
         res.render("billPaymentPage.ejs", { billData: billData });
     } 
     catch (error) {
-        if (error.response.data.error === "Payment Required") {
+        console.error(error);
+        if (error.response && error.response.data && error.response.data.error === "Payment Required") {
             res.render("billPaymentPage.ejs", { payError: `Bill with Bill Id: ${billIDInput} is already paid!` });
-        }
-        if (error.response.data.error === "Not Found"){
+        } else if (error.response && error.response.data && error.response.data.error === "Not Found"){
             res.render("billPaymentPage.ejs", { payError: `There is no Bill with Bill Id: ${billIDInput}!` });
+        }  else if (error.response && error.response.data && error.response.data.error === "Forbidden"){
+            res.render("billPaymentPage.ejs", { payError: `The bill with bill_id:  ${billIDInput} is expired on 2025-05-25T00:00:00.000Z` });
+        }
+         else {
+            res.render("billPaymentPage.ejs", { payError: "An unexpected error occurred while fetching the bill." });
         }
     }
 });
